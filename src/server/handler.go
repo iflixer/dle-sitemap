@@ -9,7 +9,9 @@ import (
 
 func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	dom := r.URL.Query().Get("dom")
+
+	// domain should be in header X-Domain-Host
+	dom := r.Header.Get("X-Domain-Host")
 	if dom == "" {
 		log.Println("domain not set")
 		http.Error(w, "domain not set", http.StatusInternalServerError)
