@@ -30,34 +30,66 @@ func (s *Service) Posts() (res []*Post, err error) {
 	}
 
 	for i, p := range res {
-		firstCat := 0
-		postCats := strings.Split(p.Category, ",")
-		if len(postCats) == 0 {
-			continue
-		}
-		firstCat = helper.StrToInt(postCats[0])
-
-		res[i].URL = s.makeUrl(cats, firstCat, p.ID, p.AltName)
+		res[i].URL = s.makeUrl(cats, p.Category, p.ID, p.AltName)
 	}
 
 	return
 }
 
-func (s *Service) makeUrl(cats []*Category, catId int, postId int, altName string) (res string) {
-	catAlt := ""
-	catParentAlt := ""
-	parentCatId := 0
-	for _, c := range cats {
-		if c.ID == catId {
-			parentCatId = c.Parentid
-			catAlt = c.AltName
-		}
+func (s *Service) makeUrl(catsAll []*Category, catsPostStr string, postId int, altName string) (res string) {
+
+	catsPost := strings.Split(catsPostStr, ",")
+	if len(catsPost) == 0 {
+		return
 	}
-	for _, c := range cats {
-		if c.ID == parentCatId {
-			catParentAlt = c.AltName
-		}
+	if len(catsPost) == 2 { // category, genre
+		category := helper.StrToInt(catsPost[0])
+		genre := helper.StrToInt(catsPost[1])
+		categorySlug := s.catSlug(catsAll, category)
+		genreSlug := s.catSlug(catsAll, genre)
+		res = fmt.Sprintf("/%s/%s/%d-%s.html", categorySlug, genreSlug, postId, altName)
+		return
 	}
-	res = fmt.Sprintf("%s/%s/%d-%s.html", catParentAlt, catAlt, postId, altName)
+
+	if len(catsPost) == 1 { // category without genre
+		category := helper.StrToInt(catsPost[0])
+		categorySlug := s.catSlug(catsAll, category)
+		res = fmt.Sprintf("/%s/%d-%s.html", categorySlug, postId, altName)
+		return
+	}
+
+	// cats := []*Category{}
+	// firstCat := 0
+	// postCats := strings.Split(p.Category, ",")
+	// if len(postCats) == 0 {
+	// 	return
+	// }
+	// firstCat = helper.StrToInt(postCats[0])
+
+	// catAlt := ""
+	// catParentAlt := ""
+	// parentCatId := 0
+	// for _, c := range cats {
+	// 	if c.ID == catId {
+	// 		parentCatId = c.Parentid
+	// 		catAlt = c.AltName
+	// 	}
+	// }
+	// for _, c := range cats {
+	// 	if c.ID == parentCatId {
+	// 		catParentAlt = c.AltName
+	// 	}
+	// }
+	// res = fmt.Sprintf("%s/%s/%d-%s.html", catParentAlt, catAlt, postId, altName)
+	// return
 	return
+}
+
+func (s *Service) catSlug(catsAll []*Category, catId int) (slug string) {
+	for _, c := range catsAll {
+		if c.ID == catId {
+			return c.AltName
+		}
+	}
+	return ""
 }

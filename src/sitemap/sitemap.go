@@ -15,7 +15,8 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 	sm := stm.NewSitemap(1)
 	sm.Create()
 	sm.SetDefaultHost("https://" + dom)
-	// sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}, {"mobile", true}})
+	sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}, {"mobile", true}})
+	domainPrefix := "https://" + dom
 
 	if rootCats, err := s.dbService.Cats(0); err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 				return nil, err
 			} else {
 				for _, c := range cats {
-					sm.Add(stm.URL{{"loc", "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
+					sm.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
 				}
 			}
 		}
@@ -38,7 +39,9 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 	} else {
 		for _, p := range posts {
 			// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
-			sm.Add(stm.URL{{"loc", "/" + p.URL}, {"changefreq", "daily"}})
+			if p.URL != "" {
+				sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
+			}
 		}
 	}
 
