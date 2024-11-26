@@ -3,6 +3,7 @@ package sitemap
 import (
 	"dle-sitemap/database"
 	"log"
+	"strings"
 
 	"github.com/ikeikeikeike/go-sitemap-generator/v2/stm"
 )
@@ -40,7 +41,9 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 		for _, p := range posts {
 			// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
 			if p.URL != "" {
-				sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
+				if strings.HasPrefix(p.Category, "4,") || strings.HasPrefix(p.Category, "5,") || strings.HasPrefix(p.Category, "6,") || strings.HasPrefix(p.Category, "7,") || strings.HasPrefix(p.Category, "8,") {
+					sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
+				}
 			}
 		}
 	}
