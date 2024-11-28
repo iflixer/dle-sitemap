@@ -18,9 +18,9 @@ func (c *Post) TableName() string {
 	return "dle_post"
 }
 
-func (s *Service) Posts() (res []*Post, err error) {
+func (s *Service) Posts(domainID int) (posts []*Post, err error) {
 
-	if err = s.DB.Where("approve=?", 1).Find(&res).Error; err != nil {
+	if err = s.DB.Where("approve=?", 1).Find(&posts).Error; err != nil {
 		log.Println("Cannot load posts", err)
 	}
 
@@ -29,8 +29,14 @@ func (s *Service) Posts() (res []*Post, err error) {
 		log.Println("Cannot load categories", err)
 	}
 
-	for i, p := range res {
-		res[i].URL = s.makeUrl(cats, p.Category, p.ID, p.AltName)
+	flixPostAltNames := s.FlixPostAltNames(domainID)
+
+	for i, p := range posts {
+		if altName, err := s.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
+			posts[i].URL = s.makeUrl(cats, p.Category, p.ID, altName)
+		} else {
+			posts[i].URL = s.makeUrl(cats, p.Category, p.ID, p.AltName)
+		}
 	}
 
 	return

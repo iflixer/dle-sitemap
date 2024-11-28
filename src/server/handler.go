@@ -17,6 +17,7 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "domain not set", http.StatusInternalServerError)
 		return
 	}
+
 	sm, err := s.sitemapService.Sitemap(dom)
 	//log.Printf("%+v", sm)
 	if err != nil {

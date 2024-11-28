@@ -13,6 +13,9 @@ type Service struct {
 }
 
 func (s *Service) Sitemap(dom string) (data []byte, err error) {
+
+	domainID := s.dbService.FlixDomainIDByHost(dom)
+
 	sm := stm.NewSitemap(1)
 	sm.Create()
 	sm.SetDefaultHost("https://" + dom)
@@ -35,7 +38,7 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 		}
 	}
 
-	if posts, err := s.dbService.Posts(); err != nil {
+	if posts, err := s.dbService.Posts(domainID); err != nil {
 		return nil, err
 	} else {
 		for _, p := range posts {
