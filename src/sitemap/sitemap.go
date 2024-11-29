@@ -3,7 +3,6 @@ package sitemap
 import (
 	"dle-sitemap/database"
 	"log"
-	"strings"
 
 	"github.com/ikeikeikeike/go-sitemap-generator/v2/stm"
 )
@@ -15,8 +14,11 @@ type Service struct {
 func (s *Service) Sitemap(dom string) (data []byte, err error) {
 
 	domainID := s.dbService.FlixDomainIDByHost(dom)
-
 	sm := stm.NewSitemap(1)
+	sm.SetCompress(false)
+	sm.SetSitemapsPath("")
+	sm.SetPublicPath("")
+
 	sm.Create()
 	sm.SetDefaultHost("https://" + dom)
 	sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}, {"mobile", true}})
@@ -41,19 +43,24 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 	if posts, err := s.dbService.Posts(domainID); err != nil {
 		return nil, err
 	} else {
+		log.Println("loaded posts:", len(posts))
+		emptyURLQty := 0
 		for _, p := range posts {
 			// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
 			if p.URL != "" {
-				if strings.HasPrefix(p.Category, "4,") || strings.HasPrefix(p.Category, "5,") || strings.HasPrefix(p.Category, "6,") || strings.HasPrefix(p.Category, "7,") || strings.HasPrefix(p.Category, "8,") {
-					sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
-				}
+				sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
+			} else {
+				emptyURLQty++
 			}
 		}
+
+		log.Println("Empty URL qty", emptyURLQty)
 	}
 
-	// sm.Finalize().PingSearchEngines()
+	sm.Finalize()
 	// sm.PingSearchEngines()
-	data = sm.XMLContent()
+	//data = sm.XMLContent()
+
 	return
 }
 

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -18,7 +20,12 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sm, err := s.sitemapService.Sitemap(dom)
+	log.Println("request: ", r.RequestURI)
+
+	requestFile := r.RequestURI // fex /sitemap.xml
+	returnFile := strings.TrimLeft(requestFile, "/")
+
+	_, err := s.sitemapService.Sitemap(dom)
 	//log.Printf("%+v", sm)
 	if err != nil {
 		log.Println(err)
@@ -27,5 +34,11 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 	w.WriteHeader(http.StatusOK)
-	w.Write(sm)
+
+	file, err := os.ReadFile(returnFile)
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Write(file)
 }
