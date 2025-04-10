@@ -21,7 +21,7 @@ func (s *Service) Sitemap(dom string) (data []byte, err error) {
 
 	sm.Create()
 	sm.SetDefaultHost("https://" + dom)
-	sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}, {"mobile", true}})
+	sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}})
 	domainPrefix := "https://" + dom
 
 	if rootCats, err := s.dbService.Cats(0); err != nil {
