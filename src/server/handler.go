@@ -16,7 +16,7 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	dom := r.Header.Get("X-Domain-Host")
 	if dom == "" {
 		log.Println("domain not set")
-		http.Error(w, "domain not set", http.StatusInternalServerError)
+		http.Error(w, "domain not set", http.StatusBadRequest)
 		return
 	}
 
