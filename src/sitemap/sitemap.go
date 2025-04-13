@@ -2,6 +2,7 @@ package sitemap
 
 import (
 	"dle-sitemap/database"
+	"dle-sitemap/helper"
 	"log"
 	"os"
 	"time"
@@ -178,16 +179,14 @@ func (s *Service) loadData() (err error) {
 		sm.Finalize()
 
 		targetFolder := os.Getenv("STORAGE_PATH") + "/" + dom
-		if _, err := os.Stat(targetFolder); err == nil {
-			err := os.RemoveAll(targetFolder)
-			if err != nil {
-				log.Printf("cant delete %s: %v", targetFolder, err)
-			}
+
+		// cant use rename because of different file systems
+		if err := helper.CopyDir(tmpFolder, targetFolder); err != nil {
+			log.Printf("cant copy %s to %s: %s\n", tmpFolder, tmpFolder, err)
 		}
 
-		if err = os.Rename(tmpFolder, targetFolder); err != nil {
-			log.Println(err)
-			return
+		if err := os.RemoveAll(tmpFolder); err != nil {
+			log.Printf("cant delete %s: %v", tmpFolder, err)
 		}
 
 		//sm.PingSearchEngines()
