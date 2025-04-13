@@ -73,6 +73,9 @@ func (s *Service) MakeUrl(catsAll []*Category, catsPostStr string, postId int, a
 		}
 	}
 
+	if mainCat.AltName == "" || genre.AltName == "" {
+		return
+	}
 	res = fmt.Sprintf("/%s/%s/%d-%s.html", mainCat.AltName, genre.AltName, postId, altName)
 	return
 }

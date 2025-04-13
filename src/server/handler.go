@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -22,17 +22,24 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("request: ", r.RequestURI)
 
-	requestFile := r.RequestURI // fex /sitemap.xml
-	returnFile := strings.TrimLeft(requestFile, "/")
+	// r.RequestURI = fex /sitemap.xml
+	returnFile := os.Getenv("STORAGE_PATH") + r.RequestURI
 
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 	w.WriteHeader(http.StatusOK)
 
-	file, err := os.ReadFile(returnFile)
+	// открываем файл
+	f, err := os.Open(returnFile)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
-	w.Write(file)
+	defer f.Close()
+
+	w.Header().Set("Content-Type", "application/xml")
+
+	_, err = io.Copy(w, f)
+	if err != nil {
+		http.Error(w, "error sending file", http.StatusInternalServerError)
+	}
 }

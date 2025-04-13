@@ -136,7 +136,7 @@ func (s *Service) loadData() (err error) {
 
 		sm := stm.NewSitemap(1)
 		sm.SetCompress(false)
-		sm.SetSitemapsPath("/")
+		sm.SetSitemapsPath("")
 		sm.SetPublicPath(tmpFolder)
 
 		sm.Create()
