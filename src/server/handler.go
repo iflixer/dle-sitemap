@@ -20,10 +20,10 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("request: ", r.RequestURI)
+	log.Println("request: ", dom, r.URL.Path)
 
 	// r.RequestURI = fex /sitemap.xml
-	returnFile := os.Getenv("STORAGE_PATH") + "/" + dom + r.RequestURI
+	returnFile := os.Getenv("STORAGE_PATH") + "/" + dom + r.URL.Path
 
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 
@@ -38,7 +38,6 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	w.Header().Set("Content-Type", "application/xml")
-	w.WriteHeader(http.StatusOK)
 	_, err = io.Copy(w, f)
 	if err != nil {
 		log.Println(err)
