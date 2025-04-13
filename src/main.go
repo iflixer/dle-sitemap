@@ -2,6 +2,7 @@ package main
 
 import (
 	"dle-sitemap/database"
+	"dle-sitemap/helper"
 	"dle-sitemap/server"
 	"dle-sitemap/sitemap"
 	"log"
@@ -25,6 +26,11 @@ func main() {
 	mysqlURL := os.Getenv("MYSQL_URL")
 	port := os.Getenv("HTTP_PORT")
 
+	updatePeriod := 600
+	if os.Getenv("UPDATE_PERIOD") != "" {
+		updatePeriod = helper.StrToInt(os.Getenv("UPDATE_PERIOD"))
+	}
+
 	if os.Getenv("MYSQL_URL_FILE") != "" {
 		mysqlURL_, err := os.ReadFile(os.Getenv("MYSQL_URL_FILE"))
 		if err != nil {
@@ -40,7 +46,7 @@ func main() {
 		log.Println("dbService OK")
 	}
 
-	sitemapService, err := sitemap.NewService(dbService)
+	sitemapService, err := sitemap.NewService(dbService, updatePeriod)
 	if err != nil {
 		log.Fatal(err)
 	}

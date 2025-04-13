@@ -18,6 +18,14 @@ func (c *Post) TableName() string {
 	return "dle_post"
 }
 
+func (s *Service) PostsAll() (posts []*Post, err error) {
+
+	if err = s.DB.Where("approve=?", 1).Find(&posts).Error; err != nil {
+		log.Println("Cannot load posts", err)
+	}
+	return
+}
+
 func (s *Service) Posts(domainID int) (posts []*Post, err error) {
 
 	if err = s.DB.Where("approve=?", 1).Find(&posts).Error; err != nil {
@@ -33,16 +41,16 @@ func (s *Service) Posts(domainID int) (posts []*Post, err error) {
 
 	for i, p := range posts {
 		if altName, err := s.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
-			posts[i].URL = s.makeUrl(cats, p.Category, p.ID, altName)
+			posts[i].URL = s.MakeUrl(cats, p.Category, p.ID, altName)
 		} else {
-			posts[i].URL = s.makeUrl(cats, p.Category, p.ID, p.AltName)
+			posts[i].URL = s.MakeUrl(cats, p.Category, p.ID, p.AltName)
 		}
 	}
 
 	return
 }
 
-func (s *Service) makeUrl(catsAll []*Category, catsPostStr string, postId int, altName string) (res string) {
+func (s *Service) MakeUrl(catsAll []*Category, catsPostStr string, postId int, altName string) (res string) {
 
 	catsPost := strings.Split(catsPostStr, ",")
 	if len(catsPost) == 0 {

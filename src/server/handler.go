@@ -25,20 +25,14 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	requestFile := r.RequestURI // fex /sitemap.xml
 	returnFile := strings.TrimLeft(requestFile, "/")
 
-	_, err := s.sitemapService.Sitemap(dom)
-	//log.Printf("%+v", sm)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 	w.WriteHeader(http.StatusOK)
 
 	file, err := os.ReadFile(returnFile)
 	if err != nil {
 		log.Println(err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
-
 	w.Write(file)
 }

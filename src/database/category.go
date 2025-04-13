@@ -20,3 +20,10 @@ func (s *Service) Cats(parentId int) (res []*Category, err error) {
 	}
 	return
 }
+
+func (s *Service) CatsAll() (res []*Category, err error) {
+	if err = s.DB.Where("active=?", 1).Find(&res).Error; err != nil {
+		log.Println("Cannot load categories", err)
+	}
+	return
+}
