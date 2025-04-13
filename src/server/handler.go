@@ -23,23 +23,24 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("request: ", r.RequestURI)
 
 	// r.RequestURI = fex /sitemap.xml
-	returnFile := os.Getenv("STORAGE_PATH") + r.RequestURI
+	returnFile := os.Getenv("STORAGE_PATH") + "/" + dom + r.RequestURI
 
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
-	w.WriteHeader(http.StatusOK)
 
 	// открываем файл
 	f, err := os.Open(returnFile)
 	if err != nil {
+		log.Println("error opening file:", returnFile)
+		log.Println(err)
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
 	}
 	defer f.Close()
 
 	w.Header().Set("Content-Type", "application/xml")
-
+	w.WriteHeader(http.StatusOK)
 	_, err = io.Copy(w, f)
 	if err != nil {
-		http.Error(w, "error sending file", http.StatusInternalServerError)
+		log.Println(err)
 	}
 }
