@@ -145,34 +145,51 @@ func (s *Service) loadData() (err error) {
 		sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}})
 		domainPrefix := "https://" + dom
 
-		// generate categories
-		if rootCats, err := s.dbService.Cats(0); err != nil {
-			return err
-		} else {
-			for _, rc := range rootCats {
-				sm.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "daily"}})
-				//log.Printf("parent_id: %+v", rc.Parentid)
-				if cats, err := s.dbService.Cats(rc.ID); err != nil {
-					return err
-				} else {
-					for _, c := range cats {
-						sm.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
+		if d.PostID == 0 { // generate sitemap for all posts
+			// generate categories
+			if rootCats, err := s.dbService.Cats(0); err != nil {
+				return err
+			} else {
+				for _, rc := range rootCats {
+					sm.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "daily"}})
+					//log.Printf("parent_id: %+v", rc.Parentid)
+					if cats, err := s.dbService.Cats(rc.ID); err != nil {
+						return err
+					} else {
+						for _, c := range cats {
+							sm.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
+						}
 					}
 				}
 			}
-		}
 
-		// generate posts
-		for _, p := range posts {
-			// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
-			u := ""
-			if altName, err := s.dbService.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
-				u = s.dbService.MakeUrl(cats, p.Category, p.ID, altName)
-			} else {
-				u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
+			// generate posts
+			for _, p := range posts {
+				// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
+				u := ""
+				if altName, err := s.dbService.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
+					u = s.dbService.MakeUrl(cats, p.Category, p.ID, altName)
+				} else {
+					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
+				}
+				if u != "" {
+					sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
+				}
 			}
-			if u != "" {
-				sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
+
+		} else { // generate sitemap for specific post
+			for _, p := range posts {
+				if p.ID == d.PostID {
+					u := ""
+					if altName, err := s.dbService.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
+						u = s.dbService.MakeUrl(cats, p.Category, p.ID, altName)
+					} else {
+						u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
+					}
+					if u != "" {
+						sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
+					}
+				}
 			}
 		}
 

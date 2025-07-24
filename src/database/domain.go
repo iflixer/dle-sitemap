@@ -4,6 +4,7 @@ import "log"
 
 type FlixDomain struct {
 	ID         int
+	PostID     int
 	HostPublic string
 }
 
