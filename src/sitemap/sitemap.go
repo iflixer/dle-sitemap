@@ -189,6 +189,18 @@ func (s *Service) loadData() (err error) {
 					if u != "" {
 						sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
 					}
+
+					// add post external data
+					if postExternalJson, err := s.dbService.FlixPostExternalGetOne(p.ID); err != nil {
+						log.Println("Cannot load flix post external for post ID", p.ID, err)
+					} else {
+						for _, season := range postExternalJson.Seasons {
+							sm.Add(stm.URL{{"loc", domainPrefix + "/season/" + helper.IntToString(season.SeasonNumber) + ".html"}, {"changefreq", "daily"}})
+							for _, episode := range season.Episodes {
+								sm.Add(stm.URL{{"loc", domainPrefix + "/season/" + helper.IntToString(season.SeasonNumber) + "/episode/" + helper.IntToString(episode.EpisodeNumber) + ".html"}, {"changefreq", "daily"}})
+							}
+						}
+					}
 				}
 			}
 		}
