@@ -37,12 +37,8 @@ func (c *FlixPostExternal) TableName() string {
 
 func (s *Service) FlixPostExternalGetOne(postID int) (postExternalJson FlixPostExternalJson, err error) {
 	var post FlixPostExternal
-	if err := s.DB.Where("id=?", postID).First(&post).Error; err != nil {
+	if err := s.DB.Where("post_id=?", postID).First(&post).Error; err != nil {
 		log.Println("Cannot load flix post external", err)
-	}
-	if err := s.DB.Where("post_id=?", post.PostID).First(&post).Error; err != nil {
-		log.Println("Cannot load flix post external by post ID", err)
-		return postExternalJson, err
 	}
 	if err := json.Unmarshal([]byte(post.Json), &postExternalJson); err != nil {
 		log.Println("Cannot unmarshal flix post external JSON", err)

@@ -24,6 +24,7 @@ func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
 
 	// r.RequestURI = fex /sitemap.xml
 	returnFile := os.Getenv("STORAGE_PATH") + "/" + dom + r.URL.Path
+	log.Println("returnFile: ", returnFile)
 
 	w.Header().Add("X-Proxy-tm", fmt.Sprintf("%d", time.Since(start).Milliseconds()))
 
