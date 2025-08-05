@@ -199,9 +199,9 @@ func (s *Service) loadData() (err error) {
 						log.Println("Loaded flix post external for post ID", p.ID)
 						for _, season := range postExternalJson.Seasons {
 							log.Println("Adding season to sitemap:", season.SeasonNumber)
-							sm.Add(stm.URL{{"loc", domainPrefix + "/season/" + helper.IntToString(season.SeasonNumber) + ".html"}, {"changefreq", "daily"}})
+							sm.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber)}, {"changefreq", "daily"}})
 							for _, episode := range season.Episodes {
-								sm.Add(stm.URL{{"loc", domainPrefix + "/season/" + helper.IntToString(season.SeasonNumber) + "/episode/" + helper.IntToString(episode.EpisodeNumber) + ".html"}, {"changefreq", "daily"}})
+								sm.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber) + "/episode" + helper.IntToString(episode.EpisodeNumber)}, {"changefreq", "daily"}})
 							}
 						}
 					}
