@@ -3,8 +3,10 @@ package sitemap
 import (
 	"dle-sitemap/database"
 	"dle-sitemap/helper"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ikeikeikeike/go-sitemap-generator/v2/stm"
@@ -14,68 +16,6 @@ type Service struct {
 	dbService    *database.Service
 	updatePeriod time.Duration
 }
-
-// func (s *Service) Sitemap(dom string) (data []byte, err error) {
-// 	return
-// 	domainID := s.dbService.FlixDomainIDByHost(dom)
-// 	sm := stm.NewSitemap(1)
-// 	sm.SetCompress(false)
-// 	sm.SetSitemapsPath("")
-// 	sm.SetPublicPath("")
-
-// 	sm.Create()
-// 	sm.SetDefaultHost("https://" + dom)
-// 	sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}})
-// 	domainPrefix := "https://" + dom
-
-// 	if rootCats, err := s.dbService.Cats(0); err != nil {
-// 		return nil, err
-// 	} else {
-// 		for _, rc := range rootCats {
-// 			sm.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "daily"}})
-// 			log.Printf("parent_id: %+v", rc.Parentid)
-// 			if cats, err := s.dbService.Cats(rc.ID); err != nil {
-// 				return nil, err
-// 			} else {
-// 				for _, c := range cats {
-// 					sm.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	if posts, err := s.dbService.Posts(domainID); err != nil {
-// 		return nil, err
-// 	} else {
-// 		log.Println("loaded posts:", len(posts))
-// 		emptyURLQty := 0
-// 		for _, p := range posts {
-// 			// movies/komediya/21-kapkarashka-kubinskaja-istorija.html
-
-// 			for i, p := range posts {
-// 				if altName, err := s.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
-// 					posts[i].URL = s.makeUrl(cats, p.Category, p.ID, altName)
-// 				} else {
-// 					posts[i].URL = s.makeUrl(cats, p.Category, p.ID, p.AltName)
-// 				}
-// 			}
-
-// 			if p.URL != "" {
-// 				sm.Add(stm.URL{{"loc", domainPrefix + p.URL}, {"changefreq", "daily"}})
-// 			} else {
-// 				emptyURLQty++
-// 			}
-// 		}
-
-// 		log.Println("Empty URL qty", emptyURLQty)
-// 	}
-
-// 	sm.Finalize()
-// 	// sm.PingSearchEngines()
-// 	//data = sm.XMLContent()
-
-// 	return
-// }
 
 func NewService(dbService *database.Service, updatePeriod int) (s *Service, err error) {
 	s = &Service{
@@ -127,37 +67,50 @@ func (s *Service) loadData() (err error) {
 	// generate sitemap for each domain
 
 	for _, d := range domains {
-
 		flixPostAltNames := s.dbService.FlixPostAltNames(d.ID)
-
 		dom := d.HostPublic
-
-		tmpFolder := os.TempDir() + "sitemap-generator/" + dom
-		os.MkdirAll(tmpFolder, 0777)
-
-		sm := stm.NewSitemap(1)
-		sm.SetCompress(false)
-		sm.SetSitemapsPath("")
-		sm.SetPublicPath(tmpFolder)
-
-		sm.Create()
-		sm.SetDefaultHost("https://" + dom)
-		sm.Add(stm.URL{{"loc", ""}, {"changefreq", "always"}})
 		domainPrefix := "https://" + dom
+		tmpFolder := os.TempDir() + "sitemap-generator/" + dom
+		os.MkdirAll(tmpFolder, 0755)
+
+		smStatic := stm.NewSitemap(0)
+		smStatic.SetCompress(false)
+		smStatic.SetDefaultHost("https://" + dom)
+		smStatic.SetPublicPath(tmpFolder)
+		smStatic.SetSitemapsPath("./sitemap")
+		smStatic.SetFilename("static_pages")
+		smStatic.Create()
+		smStatic.Add(stm.URL{{"loc", "/"}, {"changefreq", "daily"}, {"priority", "1.0"}})
+
+		smCats := stm.NewSitemap(0)
+		smCats.SetCompress(false)
+		smCats.SetDefaultHost("https://" + dom)
+		smCats.SetPublicPath(tmpFolder)
+		smCats.SetSitemapsPath("./sitemap")
+		smCats.SetFilename("category_pages")
+		smCats.Create()
+
+		smPosts := stm.NewSitemap(0)
+		smPosts.SetCompress(false)
+		smPosts.SetDefaultHost("https://" + dom)
+		smPosts.SetPublicPath(tmpFolder)
+		smPosts.SetSitemapsPath("./sitemap")
+		smPosts.SetFilename("pages")
+		smPosts.Create()
 
 		if d.PostID == 0 { // generate sitemap for all posts
-			// generate categories
+
 			if rootCats, err := s.dbService.Cats(0); err != nil {
 				return err
 			} else {
 				for _, rc := range rootCats {
-					sm.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "daily"}})
+					smCats.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 					//log.Printf("parent_id: %+v", rc.Parentid)
 					if cats, err := s.dbService.Cats(rc.ID); err != nil {
 						return err
 					} else {
 						for _, c := range cats {
-							sm.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "daily"}})
+							smCats.Add(stm.URL{{"loc", domainPrefix + "/" + rc.AltName + "/" + c.AltName}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 						}
 					}
 				}
@@ -173,7 +126,7 @@ func (s *Service) loadData() (err error) {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 				}
 				if u != "" {
-					sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
+					smPosts.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "weekly"}, {"priority", "0.9"}})
 				}
 			}
 
@@ -189,7 +142,7 @@ func (s *Service) loadData() (err error) {
 						u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 					}
 					if u != "" {
-						sm.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "daily"}})
+						smPosts.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "weekly"}, {"priority", "0.9"}})
 					}
 
 					// add post external data
@@ -199,9 +152,9 @@ func (s *Service) loadData() (err error) {
 						log.Println("Loaded flix post external for post ID", p.ID)
 						for _, season := range postExternalJson.Seasons {
 							log.Println("Adding season to sitemap:", season.SeasonNumber)
-							sm.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber)}, {"changefreq", "daily"}})
+							smCats.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber)}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 							for _, episode := range season.Episodes {
-								sm.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber) + "/episode" + helper.IntToString(episode.EpisodeNumber)}, {"changefreq", "daily"}})
+								smCats.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber) + "/episode" + helper.IntToString(episode.EpisodeNumber)}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 							}
 						}
 					}
@@ -209,7 +162,31 @@ func (s *Service) loadData() (err error) {
 			}
 		}
 
-		sm.Finalize()
+		smStatic.Finalize()
+		smCats.Finalize()
+		smPosts.Finalize()
+
+		// сделать строго 1 файл - вместо sm.Finalize():
+		// data := smStatic.XMLContent()
+		// if err := os.WriteFile(filepath.Join(tmpFolder, "static_pages.xml"), data, 0644); err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// create index file manually
+		indexPath := filepath.Join(tmpFolder, "sitemap.xml")
+		indexFile, _ := os.Create(indexPath)
+		defer indexFile.Close()
+
+		indexFile.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+		indexFile.WriteString(`<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+
+		files := []string{"static_pages.xml", "category_pages.xml", "pages.xml"}
+		for _, f := range files {
+			fmt.Fprintf(indexFile, "  <sitemap><loc>%s/sitemap/%s</loc></sitemap>\n", domainPrefix, f)
+		}
+
+		indexFile.WriteString(`</sitemapindex>`)
+		fmt.Println("✅ Sitemaps generated for ", dom)
 
 		targetFolder := os.Getenv("STORAGE_PATH") + "/" + dom
 
@@ -222,7 +199,7 @@ func (s *Service) loadData() (err error) {
 			log.Printf("cant delete %s: %v", tmpFolder, err)
 		}
 
-		//sm.PingSearchEngines()
+		smPosts.PingSearchEngines()
 
 	}
 
