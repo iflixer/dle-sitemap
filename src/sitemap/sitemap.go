@@ -77,7 +77,7 @@ func (s *Service) loadData() (err error) {
 		smStatic.SetCompress(false)
 		smStatic.SetDefaultHost("https://" + dom)
 		smStatic.SetPublicPath(tmpFolder)
-		smStatic.SetSitemapsPath("./sitemap")
+		// smStatic.SetSitemapsPath("./sitemap")
 		smStatic.SetFilename("static_pages")
 		smStatic.Create()
 		smStatic.Add(stm.URL{{"loc", "/"}, {"changefreq", "daily"}, {"priority", "1.0"}})
@@ -86,17 +86,19 @@ func (s *Service) loadData() (err error) {
 		smCats.SetCompress(false)
 		smCats.SetDefaultHost("https://" + dom)
 		smCats.SetPublicPath(tmpFolder)
-		smCats.SetSitemapsPath("./sitemap")
+		// smCats.SetSitemapsPath("./sitemap")
 		smCats.SetFilename("category_pages")
 		smCats.Create()
+		smCatsIsAdded := false
 
 		smPosts := stm.NewSitemap(0)
 		smPosts.SetCompress(false)
 		smPosts.SetDefaultHost("https://" + dom)
 		smPosts.SetPublicPath(tmpFolder)
-		smPosts.SetSitemapsPath("./sitemap")
+		// smPosts.SetSitemapsPath("./sitemap")
 		smPosts.SetFilename("pages")
 		smPosts.Create()
+		smPostsIsAdded := false
 
 		if d.PostID == 0 { // generate sitemap for all posts
 
@@ -104,6 +106,7 @@ func (s *Service) loadData() (err error) {
 				return err
 			} else {
 				for _, rc := range rootCats {
+					smCatsIsAdded = true
 					smCats.Add(stm.URL{{"loc", "/" + rc.AltName}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 					//log.Printf("parent_id: %+v", rc.Parentid)
 					if cats, err := s.dbService.Cats(rc.ID); err != nil {
@@ -127,6 +130,7 @@ func (s *Service) loadData() (err error) {
 				}
 				if u != "" {
 					smPosts.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "weekly"}, {"priority", "0.9"}})
+					smPostsIsAdded = true
 				}
 			}
 
@@ -134,17 +138,6 @@ func (s *Service) loadData() (err error) {
 			log.Println("Generating sitemap for post ID:", d.PostID)
 			for _, p := range posts {
 				if p.ID == d.PostID {
-					log.Println("Found post ID:", p.ID)
-					u := ""
-					if altName, err := s.dbService.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
-						u = s.dbService.MakeUrl(cats, p.Category, p.ID, altName)
-					} else {
-						u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
-					}
-					if u != "" {
-						smPosts.Add(stm.URL{{"loc", domainPrefix + u}, {"changefreq", "weekly"}, {"priority", "0.9"}})
-					}
-
 					// add post external data
 					if postExternalJson, err := s.dbService.FlixPostExternalGetOne(p.ID); err != nil {
 						log.Println("Cannot load flix post external for post ID", p.ID, err)
@@ -152,6 +145,7 @@ func (s *Service) loadData() (err error) {
 						log.Println("Loaded flix post external for post ID", p.ID)
 						for _, season := range postExternalJson.Seasons {
 							log.Println("Adding season to sitemap:", season.SeasonNumber)
+							smCatsIsAdded = true
 							smCats.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber)}, {"changefreq", "weekly"}, {"priority", "0.7"}})
 							for _, episode := range season.Episodes {
 								smCats.Add(stm.URL{{"loc", domainPrefix + "/season" + helper.IntToString(season.SeasonNumber) + "/episode" + helper.IntToString(episode.EpisodeNumber)}, {"changefreq", "weekly"}, {"priority", "0.7"}})
@@ -163,10 +157,13 @@ func (s *Service) loadData() (err error) {
 		}
 
 		smStatic.Finalize()
-		smCats.Finalize()
-		smPosts.Finalize()
-
-		// сделать строго 1 файл - вместо sm.Finalize():
+		if smCatsIsAdded {
+			smCats.Finalize()
+		}
+		if smPostsIsAdded {
+			smPosts.Finalize()
+		}
+		// если надо сделать строго 1 файл - вместо sm.Finalize():
 		// data := smStatic.XMLContent()
 		// if err := os.WriteFile(filepath.Join(tmpFolder, "static_pages.xml"), data, 0644); err != nil {
 		// 	log.Fatal(err)
@@ -199,7 +196,7 @@ func (s *Service) loadData() (err error) {
 			log.Printf("cant delete %s: %v", tmpFolder, err)
 		}
 
-		smPosts.PingSearchEngines()
+		//smPosts.PingSearchEngines()
 
 	}
 
