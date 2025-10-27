@@ -21,7 +21,6 @@ func (s *Service) FlixDomainIDByHost(host string) (id int) {
 }
 
 func (s *Service) DomainsAll() (domains []*FlixDomain, err error) {
-
 	if err = s.DB.Find(&domains).Error; err != nil {
 		log.Println("Cannot load domains", err)
 	}
