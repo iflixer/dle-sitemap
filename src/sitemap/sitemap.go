@@ -63,6 +63,7 @@ func (s *Service) loadData() (err error) {
 
 	// generate sitemap for each domain
 	for _, d := range domains {
+		log.Printf("=== Domain %s id %d post_id: %d", d.HostPublic, d.ID, d.PostID)
 		flixPostAltNames := s.dbService.FlixPostAltNames(d.ID)
 		dom := d.HostPublic
 		domainPrefix := "https://" + dom
@@ -76,42 +77,70 @@ func (s *Service) loadData() (err error) {
 		smStatic.Init(dom, tmpFolder, "sitemap_static.xml")
 		smStatic.Add(SmSitemapRow{
 			Loc:        domainPrefix + "/",
-			ChangeFreq: "monthly",
-			Priority:   "0.5",
+			ChangeFreq: "daily",
+			Priority:   "1.0",
 		})
 
 		smNews := &SmSitemap{}
 		smNews.Init(dom, tmpFolder, "sitemap_news.xml")
 
+		smPages := &SmSitemap{}
+		smPages.Init(dom, tmpFolder, "sitemap_pages.xml")
+
+		smCollections := &SmSitemap{}
+		smCollections.Init(dom, tmpFolder, "sitemap_collections.xml")
+
 		smCats := &SmSitemap{}
 		smCats.Init(dom, tmpFolder, "sitemap_category.xml")
 
+		smIndex.Add("sitemap_static.xml", "")
+		smIndex.Add("sitemap_pages.xml", "")
+
 		if d.PostID == 0 { // generate sitemap for all posts
-			smIndex.Add("sitemap_static.xml", "")
 			smIndex.Add("sitemap_category.xml", "")
-			smIndex.Add("sitemap_news.xml", "")
+			smIndex.Add("sitemap_collections.xml", "")
 			if rootCats, err := s.dbService.Cats(0); err != nil {
 				return err
 			} else {
-				// categories
+
 				for _, rc := range rootCats {
-					smCats.Add(SmSitemapRow{
-						Loc:        domainPrefix + "/" + rc.AltName,
-						ChangeFreq: "weekly",
-						Priority:   "0.7",
-					})
-					if cats, err := s.dbService.Cats(rc.ID); err != nil {
-						return err
+					if rc.ID < 1000 { // categories
+						smCats.Add(SmSitemapRow{
+							Loc:        domainPrefix + "/" + rc.AltName,
+							ChangeFreq: "weekly",
+							Priority:   "0.7",
+						})
+						if cats, err := s.dbService.Cats(rc.ID); err != nil {
+							return err
+						} else {
+							for _, c := range cats {
+								smCats.Add(SmSitemapRow{
+									Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
+									ChangeFreq: "weekly",
+									Priority:   "0.7",
+								})
+							}
+						}
 					} else {
-						for _, c := range cats {
-							smCats.Add(SmSitemapRow{
-								Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
-								ChangeFreq: "weekly",
-								Priority:   "0.7",
-							})
+						// smCollections.Add(SmSitemapRow{
+						// 	Loc:        domainPrefix + "/" + rc.AltName,
+						// 	ChangeFreq: "weekly",
+						// 	Priority:   "0.7",
+						// })
+						if cats, err := s.dbService.Cats(rc.ID); err != nil {
+							return err
+						} else {
+							for _, c := range cats {
+								smCollections.Add(SmSitemapRow{
+									Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
+									ChangeFreq: "daily",
+									Priority:   "0.8",
+								})
+							}
 						}
 					}
 				}
+
 			}
 
 			// posts
@@ -123,7 +152,7 @@ func (s *Service) loadData() (err error) {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 				}
 				if u != "" {
-					smNews.Add(SmSitemapRow{
+					smPages.Add(SmSitemapRow{
 						Loc:        domainPrefix + u,
 						ChangeFreq: "weekly",
 						Priority:   "0.9",
@@ -132,8 +161,6 @@ func (s *Service) loadData() (err error) {
 			}
 
 		} else { // generate sitemap for specific post
-			smIndex.Add("sitemap_static.xml", "")
-			smIndex.Add("sitemap_news.xml", "")
 			log.Println("Generating sitemap for post ID:", d.PostID)
 			for _, p := range posts {
 				if p.ID == d.PostID {
@@ -144,13 +171,13 @@ func (s *Service) loadData() (err error) {
 						log.Println("Loaded flix post external for post ID", p.ID)
 						for _, season := range postExternalJson.Seasons {
 							log.Println("Adding season to sitemap:", season.SeasonNumber)
-							smNews.Add(SmSitemapRow{
+							smPages.Add(SmSitemapRow{
 								Loc:        domainPrefix + "/season" + helper.IntToString(season.SeasonNumber),
 								ChangeFreq: "weekly",
 								Priority:   "0.9",
 							})
 							for _, episode := range season.Episodes {
-								smNews.Add(SmSitemapRow{
+								smPages.Add(SmSitemapRow{
 									Loc:        domainPrefix + "/season" + helper.IntToString(season.SeasonNumber) + "/episode" + helper.IntToString(episode.EpisodeNumber),
 									ChangeFreq: "weekly",
 									Priority:   "0.9",
@@ -166,7 +193,9 @@ func (s *Service) loadData() (err error) {
 		smStatic.Close()
 		smIndex.Close()
 		smCats.Close()
+		smCollections.Close()
 		smNews.Close()
+		smPages.Close()
 
 		targetFolder := os.Getenv("STORAGE_PATH") + "/" + dom
 
