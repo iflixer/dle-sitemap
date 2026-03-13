@@ -8,11 +8,12 @@ import (
 )
 
 type Post struct {
-	ID        int
-	AltName   string
-	Category  string
-	URL       string
-	UpdatedAt string
+	ID           int
+	AltName      string
+	Category     string
+	URL          string
+	UpdatedAt    string
+	CategoryRoot int
 }
 
 func (c *Post) TableName() string {

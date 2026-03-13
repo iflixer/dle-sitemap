@@ -102,49 +102,52 @@ func (s *Service) loadData() (err error) {
 			if rootCats, err := s.dbService.Cats(0); err != nil {
 				return err
 			} else {
-
-				for _, rc := range rootCats {
-					if rc.ID < 1000 { // categories
-						smCats.Add(SmSitemapRow{
-							Loc:        domainPrefix + "/" + rc.AltName,
-							ChangeFreq: "weekly",
-							Priority:   "0.7",
-						})
-						if cats, err := s.dbService.Cats(rc.ID); err != nil {
-							return err
-						} else {
-							for _, c := range cats {
-								smCats.Add(SmSitemapRow{
-									Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
-									ChangeFreq: "weekly",
-									Priority:   "0.7",
-								})
+				if d.RootCat == 0 {
+					for _, rc := range rootCats {
+						if rc.ID < 1000 { // categories
+							smCats.Add(SmSitemapRow{
+								Loc:        domainPrefix + "/" + rc.AltName,
+								ChangeFreq: "weekly",
+								Priority:   "0.7",
+							})
+							if cats, err := s.dbService.Cats(rc.ID); err != nil {
+								return err
+							} else {
+								for _, c := range cats {
+									smCats.Add(SmSitemapRow{
+										Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
+										ChangeFreq: "weekly",
+										Priority:   "0.7",
+									})
+								}
 							}
-						}
-					} else {
-						// smCollections.Add(SmSitemapRow{
-						// 	Loc:        domainPrefix + "/" + rc.AltName,
-						// 	ChangeFreq: "weekly",
-						// 	Priority:   "0.7",
-						// })
-						if cats, err := s.dbService.Cats(rc.ID); err != nil {
-							return err
 						} else {
-							for _, c := range cats {
-								smCollections.Add(SmSitemapRow{
-									Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
-									ChangeFreq: "daily",
-									Priority:   "0.8",
-								})
+							// smCollections.Add(SmSitemapRow{
+							// 	Loc:        domainPrefix + "/" + rc.AltName,
+							// 	ChangeFreq: "weekly",
+							// 	Priority:   "0.7",
+							// })
+							if cats, err := s.dbService.Cats(rc.ID); err != nil {
+								return err
+							} else {
+								for _, c := range cats {
+									smCollections.Add(SmSitemapRow{
+										Loc:        domainPrefix + "/" + rc.AltName + "/" + c.AltName,
+										ChangeFreq: "daily",
+										Priority:   "0.8",
+									})
+								}
 							}
 						}
 					}
 				}
-
 			}
 
 			// posts
 			for _, p := range posts {
+				if d.RootCat > 0 && p.CategoryRoot != d.RootCat {
+					continue
+				}
 				u := ""
 				if altName, err := s.dbService.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, altName)

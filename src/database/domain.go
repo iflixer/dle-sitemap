@@ -6,6 +6,7 @@ type FlixDomain struct {
 	ID         int
 	PostID     int
 	HostPublic string
+	RootCat    int
 }
 
 func (c *FlixDomain) TableName() string {
