@@ -3,10 +3,10 @@ package database
 import "log"
 
 type FlixDomain struct {
-	ID         int
-	PostID     int
-	HostPublic string
-	RootCat    int
+	ID           int
+	PostID       int
+	HostPublic   string
+	CategoryRoot int
 }
 
 func (c *FlixDomain) TableName() string {

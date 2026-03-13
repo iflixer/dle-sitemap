@@ -102,7 +102,7 @@ func (s *Service) loadData() (err error) {
 			if rootCats, err := s.dbService.Cats(0); err != nil {
 				return err
 			} else {
-				if d.RootCat == 0 {
+				if d.CategoryRoot == 0 {
 					for _, rc := range rootCats {
 						if rc.ID < 1000 { // categories
 							smCats.Add(SmSitemapRow{
@@ -145,7 +145,7 @@ func (s *Service) loadData() (err error) {
 
 			// posts
 			for _, p := range posts {
-				if d.RootCat > 0 && p.CategoryRoot != d.RootCat {
+				if d.CategoryRoot > 0 && p.CategoryRoot != d.CategoryRoot {
 					continue
 				}
 				u := ""
