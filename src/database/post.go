@@ -34,12 +34,15 @@ func (s *Service) Posts(domainID int) (posts []*Post, err error) {
 		log.Println("Cannot load posts", err)
 	}
 
+	log.Printf("Posts: loaded %d posts\n", len(posts))
+
 	cats := []*Category{}
 	if err = s.DB.Where("active=?", 1).Find(&cats).Error; err != nil {
 		log.Println("Cannot load categories", err)
 	}
 
 	flixPostAltNames := s.FlixPostAltNames(domainID)
+	log.Printf("Posts: loaded %d Flix post alt names\n", len(flixPostAltNames))
 
 	for i, p := range posts {
 		if altName, err := s.FlixPostFindAltName(flixPostAltNames, p.ID); err == nil {

@@ -25,5 +25,6 @@ func (s *Service) DomainsAll() (domains []*FlixDomain, err error) {
 	if err = s.DB.Find(&domains).Error; err != nil {
 		log.Println("Cannot load domains", err)
 	}
+	log.Printf("Loaded domains: %d", len(domains))
 	return
 }
