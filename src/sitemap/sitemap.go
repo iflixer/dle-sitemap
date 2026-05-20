@@ -100,6 +100,7 @@ func (s *Service) loadData() (err error) {
 			smIndex.Add("sitemap_category.xml", "")
 			smIndex.Add("sitemap_collections.xml", "")
 			if rootCats, err := s.dbService.Cats(0); err != nil {
+				log.Println("Cannot load root categories", err)
 				return err
 			} else {
 				if d.CategoryRoot == 0 {
@@ -111,6 +112,7 @@ func (s *Service) loadData() (err error) {
 								Priority:   "0.7",
 							})
 							if cats, err := s.dbService.Cats(rc.ID); err != nil {
+								log.Println("Cannot load categories1", err)
 								return err
 							} else {
 								for _, c := range cats {
@@ -128,6 +130,7 @@ func (s *Service) loadData() (err error) {
 							// 	Priority:   "0.7",
 							// })
 							if cats, err := s.dbService.Cats(rc.ID); err != nil {
+								log.Println("Cannot load categories2", err)
 								return err
 							} else {
 								for _, c := range cats {
@@ -144,6 +147,8 @@ func (s *Service) loadData() (err error) {
 			}
 
 			// posts
+			log.Println("Total posts:", len(posts))
+			addedPostsQty := 0
 			for _, p := range posts {
 				if d.CategoryRoot > 0 && p.CategoryRoot != d.CategoryRoot {
 					continue
@@ -155,6 +160,7 @@ func (s *Service) loadData() (err error) {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 				}
 				if u != "" {
+					addedPostsQty++
 					smPages.Add(SmSitemapRow{
 						Loc:        domainPrefix + u,
 						ChangeFreq: "weekly",
@@ -162,6 +168,7 @@ func (s *Service) loadData() (err error) {
 					})
 				}
 			}
+			log.Println("Added posts:", addedPostsQty)
 
 		} else { // generate sitemap for specific post
 			log.Println("Generating sitemap for post ID:", d.PostID)
