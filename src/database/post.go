@@ -62,25 +62,26 @@ func (s *Service) MakeUrl(catsAll []*Category, catsPostStr string, postId int, a
 		return fmt.Sprintf("/%d-%s.html", postId, altName)
 	}
 
-	genreID := helper.StrToInt(catsPost[0])
+	rootCatID := helper.StrToInt(catsPost[0])
 
-	genre := &Category{}
+	rootCat := &Category{}
 	for _, c := range catsAll {
-		if c.ID == genreID {
-			genre = c
+		if c.ID == rootCatID {
+			rootCat = c
+			break
 		}
 	}
 
-	mainCat := &Category{}
-	for _, c := range catsAll {
-		if c.ID == genre.Parentid {
-			mainCat = c
-		}
-	}
+	// mainCat := &Category{}
+	// for _, c := range catsAll {
+	// 	if c.ID == genre.Parentid {
+	// 		mainCat = c
+	// 	}
+	// }
 
-	if mainCat.AltName == "" || genre.AltName == "" {
+	if rootCat.AltName == "" {
 		return fmt.Sprintf("/%d-%s.html", postId, altName)
 	}
-	res = fmt.Sprintf("/%s/%s/%d-%s.html", mainCat.AltName, genre.AltName, postId, altName)
+	res = fmt.Sprintf("/%s/%d-%s.html", rootCat.AltName, postId, altName)
 	return
 }
