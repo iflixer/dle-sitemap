@@ -63,7 +63,7 @@ func (s *Service) loadData() (err error) {
 
 	// generate sitemap for each domain
 	for _, d := range domains {
-		log.Printf("=== Domain %s id %d post_id: %d", d.HostPublic, d.ID, d.PostID)
+		log.Printf("=== Domain: %s id: %d post_id: %d, category_root: %d", d.HostPublic, d.ID, d.PostID, d.CategoryRoot)
 		flixPostAltNames := s.dbService.FlixPostAltNames(d.ID)
 		dom := d.HostPublic
 		domainPrefix := "https://" + dom
@@ -159,6 +159,7 @@ func (s *Service) loadData() (err error) {
 				} else {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 				}
+				log.Printf("generated url: %s\n", u)
 				if u != "" {
 					addedPostsQty++
 					smPages.Add(SmSitemapRow{
@@ -211,7 +212,7 @@ func (s *Service) loadData() (err error) {
 
 		// cant use rename because of different file systems
 		if err := helper.CopyDir(tmpFolder, targetFolder); err != nil {
-			log.Printf("cant copy %s to %s: %s\n", tmpFolder, tmpFolder, err)
+			log.Printf("cant copy %s to %s: %s\n", tmpFolder, targetFolder, err)
 		}
 
 		if err := os.RemoveAll(tmpFolder); err != nil {
