@@ -159,7 +159,6 @@ func (s *Service) loadData() (err error) {
 				} else {
 					u = s.dbService.MakeUrl(cats, p.Category, p.ID, p.AltName)
 				}
-				log.Printf("generated url: %s\n", u)
 				if u != "" {
 					addedPostsQty++
 					smPages.Add(SmSitemapRow{
